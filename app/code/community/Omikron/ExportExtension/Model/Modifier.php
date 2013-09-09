@@ -74,7 +74,12 @@ class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$addImageUrlToField = false;
 		}
 		
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags) {
+		$addParentSku = $this->getVar('add_parent_sku', '');
+		if (empty($addParentSku)) {
+			$addParentSku = false;
+		}
+		
+		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -118,6 +123,17 @@ class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert
 				} catch (Exception $e) { /* and forget */}
 			}
 			
+			if ($addParentSku !== false) {
+				try{
+					list($parentID) = Mage::getResourceSingleton('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
+					if ($parentID != null) {
+						$row[$addParentSku] = Mage::getModel('catalog/product')->load($parentID)->getSku();
+					} else {
+						$row[$addParentSku] = '';
+					}
+				} catch (Exception $e) { /* and forget */}
+			}
+
             $batchExport->setBatchData($row)
 				->setStatus(2)
 				->save();
