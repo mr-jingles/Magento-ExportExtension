@@ -14,6 +14,7 @@ class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private $_categoryDelimiter;
 	private $_categoryPathDelimiter;
 	private $_firstCategoryLevel;
+	private $_childSkuDelimiter;
 	
 	protected function _removeHtmlTags(&$row)
 	{
@@ -55,6 +56,23 @@ class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 	}
 	
+	protected function _addChildSkus(&$row, &$product)
+	{
+		$childSkuFieldName = $this->_getChildSkuFieldName();
+		$childSkuDelimiter = $this->_getChildSkuDelimiter();
+		$row[$childSkuFieldName] = '';
+
+		// Check to see if configurable
+		if ($product->getTypeId() == "configurable") {
+			$childProducts = Mage::getModel('catalog/product_type_configurable')->getUsedProducts(null,$product);
+			$childSkuArray = array();
+			foreach($childProducts AS $childProduct) {
+				$childSkuArray[] = $childProduct->getSku();
+			}
+			$row[$childSkuFieldName] = implode($childSkuDelimiter,$childSkuArray);
+		}
+	}
+	
 	/**
 	 * modifies each data
 	 */
@@ -79,7 +97,12 @@ class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$addParentSku = false;
 		}
 		
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku) {
+		$addChildSku = $this->getVar('add_child_sku', '');
+		if (empty($addChildSku)) {
+			$addChildSku = false;
+		}
+
+		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -134,6 +157,10 @@ class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert
 				} catch (Exception $e) { /* and forget */}
 			}
 
+			if ($addChildSku !== false) {
+				$this->_addChildSkus($row, $product);
+			}
+			
             $batchExport->setBatchData($row)
 				->setStatus(2)
 				->save();
@@ -186,6 +213,23 @@ class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 		return $this->_categoryPathDelimiter;
 	}
+	
+	private function _getChildSkuFieldName()
+	{
+		if (!$this->_getChildSkuFieldName) {
+			$this->_getChildSkuFieldName = $this->getVar('add_child_sku', ',');
+		}
+		return $this->_getChildSkuFieldName;
+	}
+
+	private function _getChildSkuDelimiter()
+	{
+		if (!$this->_childSkuDelimiter) {
+			$this->_childSkuDelimiter = $this->getVar('child_sku_delimiter', ',');
+		}
+		return $this->_childSkuDelimiter;
+	}
+	
 	
 	/**
 	 * returns the number of the category level, which should be exported first at the category path
