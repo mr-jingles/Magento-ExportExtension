@@ -6,7 +6,7 @@
       <version_ids>2</version_ids>
       <version_ids>1</version_ids>
    </version_ids>
-   <summary>This module extends the dataflow module, so categories can be added to the product export.</summary>
+   <summary>This module extends the dataflow module, so categories and child/parent SKUs can be added to the product export.</summary>
    <description>This module extends the dataflow module. It contains a parser, which can be used by an advanced profile. This &quot;parser&quot; has this features:
 - adding category names to the product export
 - removing html tags
@@ -28,16 +28,19 @@ Ability to add parent and child SKUs added by Richard Aspden, http://www.insanit
    <license_uri>http://opensource.org/licenses/osl-3.0.php</license_uri>
    <version>1.3.0</version>
    <stability>stable</stability>
-   <notes>added ability to export parent SKUs</notes>
+   <notes>added ability to export parent and child SKUs</notes>
    <authors>
       <name>
          <name>Rudolf Batt</name>
+		 <name>Richard Aspden</name>
       </name>
       <user>
          <user>rbatt</user>
+		 <user>insanityinside</user>
       </user>
       <email>
          <email>rb@omikron.net</email>
+		 <email>magento@insanityinside.net</email>
       </email>
    </authors>
    <depends_php_min>5.2.6</depends_php_min>

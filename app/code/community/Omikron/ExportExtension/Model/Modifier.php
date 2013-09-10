@@ -3,7 +3,9 @@
  * this class adds small functions to modify the export data
  *
  * @copyright  Copyright (c) 2009 Omikron Data Quality GmbH (http://www.omikron.net)
+ * @copyright  Copyright (c) 2013 Richard Aspden (http://www.insanityinside.net)
  * @author     Rudolf Batt (rb@omikron.net)
+ * @author     Richard Aspden (magento@insanityinside.net)
  */
 
 
