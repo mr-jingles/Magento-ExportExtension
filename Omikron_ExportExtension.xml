@@ -36,11 +36,11 @@ Ability to add parent and child SKUs added by Richard Aspden, http://www.insanit
       </name>
       <user>
          <user>rbatt</user>
-		 <user>insanityinside</user>
+         <user>insanityinside</user>
       </user>
       <email>
          <email>rb@omikron.net</email>
-		 <email>magento@insanityinside.net</email>
+         <email>magento@insanityinside.net</email>
       </email>
    </authors>
    <depends_php_min>5.2.6</depends_php_min>
