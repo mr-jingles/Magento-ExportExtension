@@ -1,13 +1,14 @@
 <_>
-   <form_key>Z9ZJwL94R4Mt03Uw</form_key>
-   <name>Omikron_ExportExtension</name>
+   <form_key>khkGaygrbApfyHWn</form_key>
+   <name>Omikron_Exportextension</name>
    <channel>community</channel>
    <version_ids>
       <version_ids>2</version_ids>
       <version_ids>1</version_ids>
    </version_ids>
-   <summary>This module extends the dataflow module, so categories and child/parent SKUs can be added to the product export.</summary>
-   <description>This module extends the dataflow module. It contains a parser, which can be used by an advanced profile. This &quot;parser&quot; has this features:
+   <summary>This module extends the dataflow module, so categories and child/parent SKUs can be added to the product
+  export.</summary>
+   <description>This module extends the dataflow module. It contains a parser, which can be used by an advanced profile. This &amp;amp;quot;parser&amp;amp;quot; has this features:
 - adding category names to the product export
 - removing html tags
 - removing linebreaks from the content
@@ -28,11 +29,11 @@ Ability to add parent and child SKUs added by Richard Aspden, http://www.insanit
    <license_uri>http://opensource.org/licenses/osl-3.0.php</license_uri>
    <version>1.3.0</version>
    <stability>stable</stability>
-   <notes>added ability to export parent and child SKUs</notes>
+   <notes>Added ability to export parent and child SKUs for configurable products and their children, bumped to 1.3.0</notes>
    <authors>
       <name>
          <name>Rudolf Batt</name>
-		 <name>Richard Aspden</name>
+         <name>Richard Aspden</name>
       </name>
       <user>
          <user>rbatt</user>
@@ -65,12 +66,15 @@ Ability to add parent and child SKUs added by Richard Aspden, http://www.insanit
       </package>
       <extension>
          <name>
+            <name>Core</name>
             <name>PDO</name>
          </name>
          <min>
             <min/>
+            <min/>
          </min>
          <max>
+            <max/>
             <max/>
          </max>
       </extension>
@@ -80,18 +84,22 @@ Ability to add parent and child SKUs added by Richard Aspden, http://www.insanit
          <target>magelocal</target>
          <target>magecommunity</target>
          <target>mage</target>
+         <target>mageetc</target>
       </target>
       <path>
          <path/>
-         <path>Omikron/ExportExtension</path>
+         <path>Omikron/Exportextension</path>
          <path>cron_export.php</path>
+         <path>modules/Omikron_Exportextension.xml</path>
       </path>
       <type>
          <type>file</type>
          <type>dir</type>
          <type>file</type>
+         <type>file</type>
       </type>
       <include>
+         <include/>
          <include/>
          <include/>
          <include/>
@@ -100,10 +108,7 @@ Ability to add parent and child SKUs added by Richard Aspden, http://www.insanit
          <ignore/>
          <ignore/>
          <ignore/>
+         <ignore/>
       </ignore>
    </contents>
-   <page>1</page>
-   <limit>200</limit>
-   <folder/>
-   <package/>
 </_>

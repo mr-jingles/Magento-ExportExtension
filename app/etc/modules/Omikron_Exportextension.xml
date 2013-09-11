@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <config>
     <modules>
-        <Omikron_ExportExtension>
+        <Omikron_Exportextension>
             <active>true</active>
             <codePool>community</codePool>
-        </Omikron_ExportExtension>
+        </Omikron_Exportextension>
     </modules>
 </config>

@@ -9,7 +9,7 @@
  */
 
 
-class Omikron_ExportExtension_Model_Modifier extends Mage_Dataflow_Model_Convert_Parser_Abstract
+class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert_Parser_Abstract
 {	
 	private $_categoryPathCache;
 	private $_categoryFieldName;

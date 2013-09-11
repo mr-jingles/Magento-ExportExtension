@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <config>
     <modules>
-        <Omikron_ExportExtension>
+        <Omikron_Exportextension>
             <version>1.3.0</version>
-        </Omikron_ExportExtension>
+        </Omikron_Exportextension>
     </modules>
     
     <global>
 		<models>
             <exportextension>
-                <class>Omikron_ExportExtension_Model</class>
+                <class>Omikron_Exportextension_Model</class>
             </exportextension>
         </models>
     </global>
