@@ -1,13 +1,12 @@
 <_>
-   <form_key>khkGaygrbApfyHWn</form_key>
+   <form_key>XbVu5vIwsPwhpvjm</form_key>
    <name>Omikron_Exportextension</name>
    <channel>community</channel>
    <version_ids>
       <version_ids>2</version_ids>
       <version_ids>1</version_ids>
    </version_ids>
-   <summary>This module extends the dataflow module, so categories and child/parent SKUs can be added to the product
-  export.</summary>
+   <summary>This module extends the dataflow module, so categories, child/parent SKUs and gallery image URLs can be added to the product export.</summary>
    <description>This module extends the dataflow module. It contains a parser, which can be used by an advanced profile. This &amp;amp;quot;parser&amp;amp;quot; has this features:
 - adding category names to the product export
 - removing html tags
@@ -15,6 +14,7 @@
 - adding absolute image and product links
 - adding parent SKUs for simple products that are part of a configurable product
 - adding child SKUs for configurable products
+- adding gallery image URLs associated with a product
 This module only can be used to export product data. See the Documentation for more details.
 
 You find a full documentation here:
@@ -24,12 +24,12 @@ http://www.magentocommerce.com/boards/viewthread/60113/
 http://www.magentocommerce.com/boards/viewthread/60111/
 (German Version)
 
-Ability to add parent and child SKUs added by Richard Aspden, http://www.insanityinside.net/</description>
+Ability to add parent/child SKUs and gallery images added by Richard Aspden, http://www.insanityinside.net/</description>
    <license>OSL</license>
    <license_uri>http://opensource.org/licenses/osl-3.0.php</license_uri>
    <version>1.3.1</version>
    <stability>stable</stability>
-   <notes>Added ability to export parent and child SKUs for configurable products and their children, bumped to 1.3.1</notes>
+   <notes>Added ability to export gallery image URLs, fixed bugs with column display, bumped to 1.3.1</notes>
    <authors>
       <name>
          <name>Rudolf Batt</name>
@@ -61,7 +61,7 @@ Ability to add parent and child SKUs added by Richard Aspden, http://www.insanit
             <max/>
          </max>
          <files>
-            <files>    </files>
+            <files>           </files>
          </files>
       </package>
       <extension>
