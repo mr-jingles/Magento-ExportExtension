@@ -7,6 +7,7 @@ This module extends the dataflow module. It contains a parser, which can be used
 * adding absolute image and product links
 * adding parent SKUs for simple products that are part of a configurable product
 * adding child SKUs for configurable products
+* adding gallery image URLs
 
 This module only can be used to export product data. See the Documentation for more details: 
 [English Documentation] (http://www.magentocommerce.com/boards/viewthread/60113/)
