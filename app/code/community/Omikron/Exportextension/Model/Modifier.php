@@ -17,6 +17,9 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private $_categoryPathDelimiter;
 	private $_firstCategoryLevel;
 	private $_childSkuDelimiter;
+	private $_getParentSkuFieldName;
+	private $_galleryImageURLFieldName;
+	private $_galleryImageURLDelimiter;
 	
 	protected function _removeHtmlTags(&$row)
 	{
@@ -58,6 +61,18 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 	}
 	
+	protected function _addParentSkus(&$row, &$product)
+	{
+		$parentSkuFieldName = $this->_getParentSkuFieldName();
+
+		list($parentID) = Mage::getResourceSingleton('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
+		if ($parentID != null) {
+			$row[$parentSkuFieldName] = Mage::getModel('catalog/product')->load($parentID)->getSku();
+		} else {
+			$row[$parentSkuFieldName] = '';
+		}
+	}
+	
 	protected function _addChildSkus(&$row, &$product)
 	{
 		$childSkuFieldName = $this->_getChildSkuFieldName();
@@ -73,6 +88,29 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			}
 			$row[$childSkuFieldName] = implode($childSkuDelimiter,$childSkuArray);
 		}
+	}
+	
+	protected function _addGalleryImageURLs(&$row, &$product)
+	{
+		$galleryImageURLFieldName = $this->_getGalleryImageURLFieldName();
+		$galleryImagesDelimiter = $this->_getGalleryImageURLDelimiter();
+		
+		$mediaGallery = $product->getMediaGallery();
+		$mediaGallery = $mediaGallery['images'];
+		$galleryImageURLs = array();
+		$_baseurl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA).'catalog/product/';
+		
+		foreach ($mediaGallery as $galleryImage) {
+			if (!$galleryImage['disabled']) {
+				if (substr($_baseurl,-1) == '/' && substr($galleryImage['file'],0) == '/') { // Clean up double slashes
+					$galleryImageURLs[] = $_baseurl.substr($galleryImage['file'],1);
+				} else {
+					$galleryImageURLs[] = $_baseurl.$galleryImage['file'];
+				}
+			}
+		}
+
+		$row[$galleryImageURLFieldName] = implode($galleryImagesDelimiter,$galleryImageURLs);
 	}
 	
 	/**
@@ -103,8 +141,13 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		if (empty($addChildSku)) {
 			$addChildSku = false;
 		}
+		
+		$addGalleryImageURLs = $this->getVar('add_gallery_image_urls', '');
+		if (empty($addGalleryImageURLs)) {
+			$addGalleryImageURLs = false;
+		}
 
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku) {
+		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -149,18 +192,15 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			}
 			
 			if ($addParentSku !== false) {
-				try{
-					list($parentID) = Mage::getResourceSingleton('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
-					if ($parentID != null) {
-						$row[$addParentSku] = Mage::getModel('catalog/product')->load($parentID)->getSku();
-					} else {
-						$row[$addParentSku] = '';
-					}
-				} catch (Exception $e) { /* and forget */}
+				$this->_addParentSkus($row, $product);
 			}
 
 			if ($addChildSku !== false) {
 				$this->_addChildSkus($row, $product);
+			}
+			
+			if ($addGalleryImageURLs !== false) {
+				$this->_addGalleryImageURLs($row, $product);
 			}
 			
             $batchExport->setBatchData($row)
@@ -215,6 +255,14 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 		return $this->_categoryPathDelimiter;
 	}
+
+	private function _getParentSkuFieldName()
+	{
+		if (!$this->_getParentSkuFieldName) {
+			$this->_getParentSkuFieldName = $this->getVar('add_parent_sku', ',');
+		}
+		return $this->_getParentSkuFieldName;
+	}
 	
 	private function _getChildSkuFieldName()
 	{
@@ -232,7 +280,22 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		return $this->_childSkuDelimiter;
 	}
 	
-	
+	private function _getGalleryImageURLFieldName()
+	{
+		if (!$this->_galleryImageURLFieldName) {
+			$this->_galleryImageURLFieldName = $this->getVar('add_gallery_image_urls', 'gallery_images');
+		}
+		return $this->_galleryImageURLFieldName;
+	}
+
+	private function _getGalleryImageURLDelimiter()
+	{
+		if (!$this->_galleryImageURLDelimiter) {
+			$this->_galleryImageURLDelimiter = $this->getVar('gallery_image_url_delimiter', ',');
+		}
+		return $this->_galleryImageURLDelimiter;
+	}
+		
 	/**
 	 * returns the number of the category level, which should be exported first at the category path
 	 */
