@@ -16,10 +16,14 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private $_categoryDelimiter;
 	private $_categoryPathDelimiter;
 	private $_firstCategoryLevel;
+	private $_childSkuFieldName;
 	private $_childSkuDelimiter;
-	private $_getParentSkuFieldName;
+	private $_parentSkuFieldName;
+	private $_configurableAttributesFieldName;
+	private $_configurableAttributesDelimiter;
 	private $_galleryImageURLFieldName;
 	private $_galleryImageURLDelimiter;
+	private $_galleryImageURLFull;
 	
 	protected function _removeHtmlTags(&$row)
 	{
@@ -90,10 +94,27 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 	}
 	
+	protected function _addConfigurableAttributes(&$row, &$product)
+	{
+		$configurableAttributesFieldName = $this->_getConfigurableAttributesFieldName();
+		$configurableAttributesDelimiter = $this->_getConfigurableAttributesDelimiter();
+
+		// See if a child product
+		list($parentID) = Mage::getResourceSingleton('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
+		if ($parentID != null) {
+			// Do something to get the attributes
+			$row[$configurableAttributesFieldName] = $product->debug();
+		} else {
+			$row[$configurableAttributesFieldName] = 'test';
+		}
+
+	}
+
 	protected function _addGalleryImageURLs(&$row, &$product)
 	{
 		$galleryImageURLFieldName = $this->_getGalleryImageURLFieldName();
 		$galleryImagesDelimiter = $this->_getGalleryImageURLDelimiter();
+		$galleryImageURLFull = $this->_getGalleryImageURLFull();
 		
 		$mediaGallery = $product->getMediaGallery();
 		$mediaGallery = $mediaGallery['images'];
@@ -102,10 +123,14 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		
 		foreach ($mediaGallery as $galleryImage) {
 			if (!$galleryImage['disabled']) {
-				if (substr($_baseurl,-1) == '/' && substr($galleryImage['file'],0) == '/') { // Clean up double slashes
-					$galleryImageURLs[] = $_baseurl.substr($galleryImage['file'],1);
+				if ($galleryImageURLFull != false) {
+					if (substr($_baseurl,-1) == '/' && substr($galleryImage['file'],0,1) == '/') { // Clean up double slashes
+						$galleryImageURLs[] = $_baseurl.str_replace('//','/',substr($galleryImage['file'],1));
+					} else {
+						$galleryImageURLs[] = $_baseurl.str_replace('//','/',$galleryImage['file']);
+					}
 				} else {
-					$galleryImageURLs[] = $_baseurl.$galleryImage['file'];
+					$galleryImageURLs[] = str_replace('//','/',$galleryImage['file']);
 				}
 			}
 		}
@@ -142,12 +167,17 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$addChildSku = false;
 		}
 		
+		$addConfigurableAttributes = $this->getVar('add_configurable_attributes', '');
+		if (empty($addConfigurableAttributes)) {
+			$addConfigurableAttributes = false;
+		}
+
 		$addGalleryImageURLs = $this->getVar('add_gallery_image_urls', '');
 		if (empty($addGalleryImageURLs)) {
 			$addGalleryImageURLs = false;
 		}
 
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs) {
+		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -199,6 +229,10 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 				$this->_addChildSkus($row, $product);
 			}
 			
+			if ($addConfigurableAttributes !== false) {
+				$this->_addConfigurableAttributes($row, $product);
+			}
+
 			if ($addGalleryImageURLs !== false) {
 				$this->_addGalleryImageURLs($row, $product);
 			}
@@ -258,18 +292,18 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 
 	private function _getParentSkuFieldName()
 	{
-		if (!$this->_getParentSkuFieldName) {
-			$this->_getParentSkuFieldName = $this->getVar('add_parent_sku', ',');
+		if (!$this->_parentSkuFieldName) {
+			$this->_parentSkuFieldName = $this->getVar('add_parent_sku', ',');
 		}
-		return $this->_getParentSkuFieldName;
+		return $this->_parentSkuFieldName;
 	}
 	
 	private function _getChildSkuFieldName()
 	{
-		if (!$this->_getChildSkuFieldName) {
-			$this->_getChildSkuFieldName = $this->getVar('add_child_sku', ',');
+		if (!$this->_childSkuFieldName) {
+			$this->_childSkuFieldName = $this->getVar('add_child_sku', ',');
 		}
-		return $this->_getChildSkuFieldName;
+		return $this->_childSkuFieldName;
 	}
 
 	private function _getChildSkuDelimiter()
@@ -278,6 +312,22 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$this->_childSkuDelimiter = $this->getVar('child_sku_delimiter', ',');
 		}
 		return $this->_childSkuDelimiter;
+	}
+
+	private function _getConfigurableAttributesFieldName()
+	{
+		if (!$this->_configurableAttributesFieldName) {
+			$this->_configurableAttributesFieldName = $this->getVar('add_configurable_attributes', ',');
+		}
+		return $this->_configurableAttributesFieldName;
+	}
+
+	private function _getConfigurableAttributesDelimiter()
+	{
+		if (!$this->_configurableAttributesDelimiter) {
+			$this->_configurableAttributesDelimiter = $this->getVar('configurable_attributes_delimiter', ',');
+		}
+		return $this->_configurableAttributesDelimiter;
 	}
 	
 	private function _getGalleryImageURLFieldName()
@@ -291,9 +341,18 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private function _getGalleryImageURLDelimiter()
 	{
 		if (!$this->_galleryImageURLDelimiter) {
-			$this->_galleryImageURLDelimiter = $this->getVar('gallery_image_url_delimiter', ',');
+			$this->_galleryImageURLDelimiter = $this->getVar('gallery_image_url_delimiter', ';');
 		}
 		return $this->_galleryImageURLDelimiter;
+	}
+		
+	private function _getGalleryImageURLFull()
+	{
+		if (!$this->_galleryImageURLFull) {
+			$this->_galleryImageURLFull = $this->getVar('gallery_image_url_full', false);
+			if ($this->_galleryImageURLFull == 'false') $this->_galleryImageURLFull = false;
+		}
+		return $this->_galleryImageURLFull;
 	}
 		
 	/**
