@@ -24,6 +24,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private $_galleryImageURLFieldName;
 	private $_galleryImageURLDelimiter;
 	private $_galleryImageURLFull;
+	private $_addConfigurableAttributes;
 	
 	protected function _removeHtmlTags(&$row)
 	{
@@ -83,32 +84,70 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		$childSkuDelimiter = $this->_getChildSkuDelimiter();
 		$row[$childSkuFieldName] = '';
 
-		// Check to see if configurable
+ 		// Check to see if configurable
 		if ($product->getTypeId() == "configurable") {
-			$childProducts = Mage::getModel('catalog/product_type_configurable')->getUsedProducts(null,$product);
+			$_product = Mage::getModel('catalog/product')->load($product->getId());
+			$attributes = $product->getTypeInstance(true)->getConfigurableAttributesAsArray($_product);
+			$childProducts = Mage::getModel('catalog/product_type_configurable')->getUsedProducts(null,$_product);
 			$childSkuArray = array();
+			if ($this->_addConfigurableAttributes ) {
+				$attributeArray = array();
+				$configurableAttributesFieldName = $this->_getConfigurableAttributesFieldName();
+				$configurableAttributesDelimiter = $this->_getConfigurableAttributesDelimiter();
+			}
 			foreach($childProducts AS $childProduct) {
 				$childSkuArray[] = $childProduct->getSku();
+				if ($this->_addConfigurableAttributes ) {
+					$attributeSubArray = array();
+					// Test attribute code
+					foreach ($attributes as $attribute) {
+					    foreach ($attribute['values'] as $value){
+					        $childValue = $childProduct->getData($attribute['attribute_code']);
+					        if ($value['value_index'] == $childValue){
+					            $attributeSubArray[$attribute['store_label']] = $value['store_label'];
+					        }
+					    }
+					}
+					$attributeArray[$childProduct->getSku()] = $attributeSubArray;
+					// End test attribute code
+				}
 			}
 			$row[$childSkuFieldName] = implode($childSkuDelimiter,$childSkuArray);
+			if ($this->_addConfigurableAttributes ) {
+				$row[$configurableAttributesFieldName] = print_r($attributeArray,1);
+			}
+		} else {
+			if ($this->_addConfigurableAttributes ) {
+				$row[$configurableAttributesFieldName] = '';
+			}
 		}
 	}
 	
-	protected function _addConfigurableAttributes(&$row, &$product)
+/*	protected function _addConfigurableAttributes(&$row, &$product)
 	{
 		$configurableAttributesFieldName = $this->_getConfigurableAttributesFieldName();
 		$configurableAttributesDelimiter = $this->_getConfigurableAttributesDelimiter();
 
 		// See if a child product
-		list($parentID) = Mage::getResourceSingleton('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
+		list($parentID) = Mage::getResourceModel('catalog/product_type_configurable')->getParentIdsByChild($product->getId());
 		if ($parentID != null) {
 			// Do something to get the attributes
-			$row[$configurableAttributesFieldName] = $product->debug();
+			/*$temp = array();
+			//$test = Mage::getModel('catalog/product')->load($product->getId());
+			$_attributes = $product->getTypeInstance(true)->getConfigurableAttributes($product);
+		    foreach($_attributes as $key => $_attribute){
+		        $temp[$key] = $_attribute;
+		    }
+			$row[$configurableAttributesFieldName] = print_r($temp,1); 
 		} else {
-			$row[$configurableAttributesFieldName] = 'test';
+			$_product = Mage::getModel("catalog/Product")->load($product->getId());
+			$_attributes = Mage::getModel('catalog/product_type_configurable')->getConfigurableAttributes($_product);
+		    /*foreach($_attributes as $key => $_attribute){
+		        $temp[$key] = $_attribute;
+		    }
+			$row[$configurableAttributesFieldName] = print_r($_attributes,1);
 		}
-
-	}
+	} */
 
 	protected function _addGalleryImageURLs(&$row, &$product)
 	{
@@ -169,7 +208,9 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		
 		$addConfigurableAttributes = $this->getVar('add_configurable_attributes', '');
 		if (empty($addConfigurableAttributes)) {
-			$addConfigurableAttributes = false;
+			$this->_addConfigurableAttributes = false;
+		} else {
+			$this->_addConfigurableAttributes = true;
 		}
 
 		$addGalleryImageURLs = $this->getVar('add_gallery_image_urls', '');
@@ -229,10 +270,6 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 				$this->_addChildSkus($row, $product);
 			}
 			
-			if ($addConfigurableAttributes !== false) {
-				$this->_addConfigurableAttributes($row, $product);
-			}
-
 			if ($addGalleryImageURLs !== false) {
 				$this->_addGalleryImageURLs($row, $product);
 			}
@@ -274,7 +311,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private function _getCategoryDelimiter()
 	{
 		if ($this->_categoryDelimiter == null) {
-			$this->_categoryDelimiter = $this->getVar('category_delimiter', '#');
+			$this->_categoryDelimiter = $this->getVar('category_delimiter', ',');
 		}
 		return $this->_categoryDelimiter;
 	}
@@ -285,7 +322,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private function _getCategoryPathDelimiter()
 	{
 		if (!$this->_categoryPathDelimiter) {
-			$this->_categoryPathDelimiter = $this->getVar('category_path_delimiter', '>');
+			$this->_categoryPathDelimiter = $this->getVar('category_path_delimiter', '/');
 		}
 		return $this->_categoryPathDelimiter;
 	}
@@ -350,7 +387,6 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	{
 		if (!$this->_galleryImageURLFull) {
 			$this->_galleryImageURLFull = $this->getVar('gallery_image_url_full', false);
-			if ($this->_galleryImageURLFull == 'false') $this->_galleryImageURLFull = false;
 		}
 		return $this->_galleryImageURLFull;
 	}
