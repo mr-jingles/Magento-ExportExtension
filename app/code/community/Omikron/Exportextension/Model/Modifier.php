@@ -82,7 +82,6 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	{
 		$childSkuFieldName = $this->_getChildSkuFieldName();
 		$childSkuDelimiter = $this->_getChildSkuDelimiter();
-		$row[$childSkuFieldName] = '';
 
  		// Check to see if configurable
 		if ($product->getTypeId() == "configurable") {
@@ -91,9 +90,10 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$childProducts = Mage::getModel('catalog/product_type_configurable')->getUsedProducts(null,$_product);
 			$childSkuArray = array();
 			if ($this->_addConfigurableAttributes ) {
-				$attributeArray = array();
+				$childAttributeArray = array();
 				$configurableAttributesFieldName = $this->_getConfigurableAttributesFieldName();
 				$configurableAttributesDelimiter = $this->_getConfigurableAttributesDelimiter();
+				$attributeArray = array();
 			}
 			foreach($childProducts AS $childProduct) {
 				$childSkuArray[] = $childProduct->getSku();
@@ -105,20 +105,21 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 					        $childValue = $childProduct->getData($attribute['attribute_code']);
 					        if ($value['value_index'] == $childValue){
 					            $attributeSubArray[$attribute['store_label']] = $value['store_label'];
+					            if (!in_array($attribute['store_label'],$attributeArray)) {
+					            	$attributeArray[] = $attribute['store_label'];
+					            }
 					        }
 					    }
 					}
-					$attributeArray[$childProduct->getSku()] = $attributeSubArray;
+					$childAttributeArray[$childProduct->getSku()] = $attributeSubArray;
 					// End test attribute code
 				}
 			}
-			$row[$childSkuFieldName] = implode($childSkuDelimiter,$childSkuArray);
-			if ($this->_addConfigurableAttributes ) {
-				$row[$configurableAttributesFieldName] = print_r($attributeArray,1);
+			if ($childSkuFieldName != false) {
+				$row[$childSkuFieldName] = implode($childSkuDelimiter,$childSkuArray);
 			}
-		} else {
 			if ($this->_addConfigurableAttributes ) {
-				$row[$configurableAttributesFieldName] = '';
+				$row[$configurableAttributesFieldName] = implode($configurableAttributesDelimiter,$attributeArray);
 			}
 		}
 	}
@@ -210,6 +211,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		if (empty($addConfigurableAttributes)) {
 			$this->_addConfigurableAttributes = false;
 		} else {
+			$this->_configurableAttributesFieldName = $addConfigurableAttributes;
 			$this->_addConfigurableAttributes = true;
 		}
 
@@ -266,7 +268,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 				$this->_addParentSkus($row, $product);
 			}
 
-			if ($addChildSku !== false) {
+			if ($addChildSku !== false || $addConfigurableAttributes !== false) {
 				$this->_addChildSkus($row, $product);
 			}
 			
@@ -311,7 +313,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private function _getCategoryDelimiter()
 	{
 		if ($this->_categoryDelimiter == null) {
-			$this->_categoryDelimiter = $this->getVar('category_delimiter', ',');
+			$this->_categoryDelimiter = $this->getVar('category_delimiter', ';');
 		}
 		return $this->_categoryDelimiter;
 	}
@@ -338,7 +340,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private function _getChildSkuFieldName()
 	{
 		if (!$this->_childSkuFieldName) {
-			$this->_childSkuFieldName = $this->getVar('add_child_sku', ',');
+			$this->_childSkuFieldName = $this->getVar('add_child_sku', false);
 		}
 		return $this->_childSkuFieldName;
 	}
