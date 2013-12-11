@@ -1,0 +1,44 @@
+<action type="catalog/convert_adapter_product" method="load">
+    <var name="store"><![CDATA[4]]></var>
+</action>
+
+<action type="catalog/convert_parser_product" method="unparse">
+    <var name="store"><![CDATA[4]]></var>
+    <var name="url_field"><![CDATA[0]]></var>
+</action>
+
+<action type="dataflow/convert_mapper_column" method="map">
+</action>
+
+<action method="unparse" type="exportextension/modifier">
+    <var name="remove_line_breaks">false</var>
+    <var name="remove_html_tags">false</var>
+    <var name="add_categories">true</var>
+    <var name="category_field_name">categories</var>
+    <var name="category_delimiter">;;</var>
+    <var name="category_first_level">2</var>
+    <var name="category_path_delimiter">/</var>
+    <var name="add_absolute_url_to_field">product_url</var>
+    <var name="add_image_url_to_field">image_url</var>
+    <var name="add_parent_sku">parent_sku</var>
+    <var name="add_child_sku">simples_skus</var>
+    <var name="child_sku_delimiter">,</var>
+    <var name="add_gallery_image_urls">media_gallery</var>
+    <var name="gallery_image_url_delimiter">;</var>
+    <var name="gallery_image_url_full">true</var>
+    <var name="add_configurable_attributes">configurable_attributes</var>
+    <var name="add_configurable_attributes_pricing_line">true</var>
+    <var name="add_image_url_to_field">true</var>
+</action>
+
+<action type="dataflow/convert_parser_csv" method="unparse">
+    <var name="delimiter"><![CDATA[,]]></var>
+    <var name="enclose"><![CDATA["]]></var>
+    <var name="fieldnames">true</var>
+</action>
+
+<action type="dataflow/convert_adapter_io" method="save">
+    <var name="type">file</var>
+    <var name="path">var/export</var>
+    <var name="filename"><![CDATA[export_product_hilden-uk-with-categories.csv]]></var>
+</action>

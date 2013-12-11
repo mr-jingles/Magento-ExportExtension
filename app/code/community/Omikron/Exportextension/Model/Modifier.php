@@ -1,11 +1,12 @@
 <?php
 /**
- * this class adds small functions to modify the export data
+ * this class adds functions to modify the export data, particularly in respect to Magmi 
  *
  * @copyright  Copyright (c) 2009 Omikron Data Quality GmbH (http://www.omikron.net)
  * @copyright  Copyright (c) 2013 Richard Aspden (http://www.insanityinside.net)
  * @author     Rudolf Batt (rb@omikron.net)
  * @author     Richard Aspden (magento@insanityinside.net)
+ * @version    1.4
  */
 
 
@@ -25,6 +26,8 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private $_galleryImageURLDelimiter;
 	private $_galleryImageURLFull;
 	private $_addConfigurableAttributes;
+	private $_addConfigurableAttributesPricingLine;
+	private $_productImageBaseURL;
 	
 	protected function _removeHtmlTags(&$row)
 	{
@@ -50,17 +53,16 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	{
 		$categoryFieldName = $this->_getCategoryFieldName();
 		$categoryDelimiter = $this->_getCategoryDelimiter();
-		
+
 		$row[$categoryFieldName] = '';
         $tempCatPath = '';
 		foreach($product->getCategoryIds() as $categoryId){
-            //dont add delimiter if previous category path was empty or no category was added yet
-			if( $tempCatPath != '' && $row[$categoryFieldName] != '') {
-				$row[$categoryFieldName] .= $categoryDelimiter;
-			}
-			
             $tempCatPath = $this->_getCategoryPath($categoryId);
 			if ($tempCatPath != '') {
+            //dont add delimiter if previous category path was empty or no category was added yet
+				if( $tempCatPath != '' && $row[$categoryFieldName] != '') {
+					$row[$categoryFieldName] .= $categoryDelimiter;
+				}
                 $row[$categoryFieldName] .= $tempCatPath;
             }
 		}
@@ -93,6 +95,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 				$childAttributeArray = array();
 				$configurableAttributesFieldName = $this->_getConfigurableAttributesFieldName();
 				$configurableAttributesDelimiter = $this->_getConfigurableAttributesDelimiter();
+				$configurableAttributesPricingLine = $this->_getAddConfigurableAttributesPricingLine();
 				$attributeArray = array();
 			}
 			foreach($childProducts AS $childProduct) {
@@ -105,8 +108,10 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 					        $childValue = $childProduct->getData($attribute['attribute_code']);
 					        if ($value['value_index'] == $childValue){
 					            $attributeSubArray[$attribute['store_label']] = $value['store_label'];
-					            if (!in_array($attribute['store_label'],$attributeArray)) {
-					            	$attributeArray[] = $attribute['store_label'];
+					            // if (!in_array($attribute['store_label'],$attributeArray)) {
+					            	// $attributeArray[] = $attribute['store_label'];
+					            if (!in_array($attribute['attribute_code'],$attributeArray)) {
+					            	$attributeArray[] = $attribute['attribute_code'];
 					            }
 					        }
 					    }
@@ -159,7 +164,8 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		$mediaGallery = $product->getMediaGallery();
 		$mediaGallery = $mediaGallery['images'];
 		$galleryImageURLs = array();
-		$_baseurl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA).'catalog/product/';
+		$_baseurl = $this->_getProductImageBaseURL();
+
 		
 		foreach ($mediaGallery as $galleryImage) {
 			if (!$galleryImage['disabled']) {
@@ -174,10 +180,15 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 				}
 			}
 		}
-
 		$row[$galleryImageURLFieldName] = implode($galleryImagesDelimiter,$galleryImageURLs);
 	}
-	
+
+	protected function _addUrlToImageFields(&$row, &$product) {
+		if (trim($row['image']) != '') $row['image'] = $this->_calculateProductImageURL($row['image']);
+		if (trim($row['small_image']) != '') $row['small_image'] = $this->_calculateProductImageURL($row['small_image']);
+		if (trim($row['thumbnail']) != '') $row['thumbnail'] = $this->_calculateProductImageURL($row['thumbnail']);
+	}
+
 	/**
 	 * modifies each data
 	 */
@@ -220,7 +231,14 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$addGalleryImageURLs = false;
 		}
 
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes) {
+		$addProductImageURL = $this->getVar('add_product_image_url', false);
+		if (empty($addProductImageURL) || $addProductImageURL == 'false') {
+			$addProductImageURL = false;
+		} else {
+			$addProductImageURL = true;
+		}
+
+		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes && !$addProductImageURL) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -275,6 +293,10 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			if ($addGalleryImageURLs !== false) {
 				$this->_addGalleryImageURLs($row, $product);
 			}
+
+			if ($addProductImageURL !== false) {
+				$this->_addUrlToImageFields($row,$product);
+			}
 			
             $batchExport->setBatchData($row)
 				->setStatus(2)
@@ -313,7 +335,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private function _getCategoryDelimiter()
 	{
 		if ($this->_categoryDelimiter == null) {
-			$this->_categoryDelimiter = $this->getVar('category_delimiter', ';');
+			$this->_categoryDelimiter = $this->getVar('category_delimiter', ';;');
 		}
 		return $this->_categoryDelimiter;
 	}
@@ -368,6 +390,14 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 		return $this->_configurableAttributesDelimiter;
 	}
+
+	private function _getAddConfigurableAttributesPricingLine()
+	{
+		if (!$this->_addConfigurableAttributesPricingLine) {
+			$this->_addConfigurableAttributesPricingLine = $this->getVar('add_configurable_attributes_pricing_line', false);
+		}
+		return $this->_addConfigurableAttributesPricingLine;
+	}
 	
 	private function _getGalleryImageURLFieldName()
 	{
@@ -402,6 +432,22 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$this->_firstCategoryLevel = intval($this->getVar('category_first_level', 1));
 		}
 		return $this->_firstCategoryLevel;
+	}
+
+	private function _getProductImageBaseURL() {
+		if (!$this->_productImageBaseURL) {
+			$this->_productImageBaseURL = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA).'catalog/product/';
+		}
+		return $this->_productImageBaseURL;
+	}
+	
+	protected function _calculateProductImageURL($imagefield) {
+		$_baseURL = $this->_getProductImageBaseURL();
+		if (substr($_baseURL,-1) == '/' && substr($imagefield,0,1) == '/') { // Clean up double slashes
+			return $_baseURL.str_replace('//','/',substr($imagefield,1));
+		} else {
+			return $_baseURL.str_replace('//','/',$imagefield);
+		}
 	}
 	
 	/**
