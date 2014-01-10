@@ -28,7 +28,7 @@
     <var name="gallery_image_url_full">true</var>
     <var name="add_configurable_attributes">configurable_attributes</var>
     <var name="add_configurable_attributes_pricing_line">true</var>
-    <var name="add_image_url_to_field">true</var>
+    <var name="add_product_image_url">true</var>
 </action>
 
 <action type="dataflow/convert_parser_csv" method="unparse">

@@ -28,6 +28,10 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private $_addConfigurableAttributes;
 	private $_addConfigurableAttributesPricingLine;
 	private $_productImageBaseURL;
+	private $_upsellFieldName;
+	private $_upsellDelimiter;
+	private $_crossSellFieldName;
+	private $_crossSellDelimiter;
 	
 	protected function _removeHtmlTags(&$row)
 	{
@@ -238,7 +242,21 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$addProductImageURL = true;
 		}
 
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes && !$addProductImageURL) {
+		$addUpsell = $this->getVar('add_upsell', false);
+		if (empty($addUpsell) || $addUpsell == 'false') {
+			$addUpsell = false;
+		} else {
+			$addUpsell = true;
+		}
+
+		$addCrossSell = $this->getVar('add_cross_sell', false);
+		if (empty($addCrossSell) || $addCrossSell == 'false') {
+			$addCrossSell = false;
+		} else {
+			$addCrossSell = true;
+		}
+
+		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes && !$addProductImageURL && !$addUpsell && !$addCrossSell) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -297,7 +315,15 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			if ($addProductImageURL !== false) {
 				$this->_addUrlToImageFields($row,$product);
 			}
-			
+
+			if ($addUpsell !== false) {
+				$this->_addUpsellSkus($row,$product);
+			}
+
+			if ($addCrossSell !== false) {
+				$this->_addCrossSellSkus($row,$product);
+			}
+
             $batchExport->setBatchData($row)
 				->setStatus(2)
 				->save();
