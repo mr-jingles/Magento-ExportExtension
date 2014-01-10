@@ -29,6 +29,10 @@
     <var name="add_configurable_attributes">configurable_attributes</var>
     <var name="add_configurable_attributes_pricing_line">true</var>
     <var name="add_product_image_url">true</var>
+    <var name="add_upsell">us_skus</var>
+    <var name="upsell_delimiter">,</var>
+    <var name="add_cross_sell">cs_skus</var>
+    <var name="cross_sell_delimiter">,</var>
 </action>
 
 <action type="dataflow/convert_parser_csv" method="unparse">
@@ -40,5 +44,5 @@
 <action type="dataflow/convert_adapter_io" method="save">
     <var name="type">file</var>
     <var name="path">var/export</var>
-    <var name="filename"><![CDATA[export_product_hilden-uk-with-categories.csv]]></var>
+    <var name="filename"><![CDATA[export_filename.csv]]></var>
 </action>

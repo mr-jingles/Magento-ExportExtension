@@ -193,6 +193,24 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		if (trim($row['thumbnail']) != '') $row['thumbnail'] = $this->_calculateProductImageURL($row['thumbnail']);
 	}
 
+	protected function _addUpsellSkus(&$row, &$product) {
+		$upsellProductSkuArray = array();
+		$upsellProducts = Mage::getModel('catalog/product')->load($product->getId())->getUpsellProducts();
+		foreach ($upsellProducts as $upsellProduct) {
+			$upsellProductSkuArray[] = $upsellProduct->getSku();
+		}
+		$row[$this->_upsellFieldName] = implode($this->_upsellDelimiter,$upsellProductSkuArray);
+	}
+
+	protected function _addCrossSellSkus(&$row, &$product) {
+		$crossSellProductSkuArray = array();
+		$crossSellProducts = Mage::getModel('catalog/product')->load($product->getId())->getCrossSellProducts();
+		foreach ($crossSellProducts as $crossSellProduct) {
+			$crossSellProductSkuArray[] = $crossSellProduct->getSku();
+		}
+		$row[$this->_crossSellFieldName] = implode($this->_crossSellDelimiter,$crossSellProductSkuArray);
+	}
+
 	/**
 	 * modifies each data
 	 */
@@ -246,6 +264,8 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		if (empty($addUpsell) || $addUpsell == 'false') {
 			$addUpsell = false;
 		} else {
+			$this->_upsellFieldName = $addUpsell;
+			$this->_upsellDelimiter = $this->getVar('upsell_delimiter', ',');
 			$addUpsell = true;
 		}
 
@@ -253,6 +273,8 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		if (empty($addCrossSell) || $addCrossSell == 'false') {
 			$addCrossSell = false;
 		} else {
+			$this->_crossSellFieldName = $addCrossSell;
+			$this->_crossSellDelimiter = $this->getVar('cross_sell_delimiter', ',');
 			$addCrossSell = true;
 		}
 
@@ -448,7 +470,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 		return $this->_galleryImageURLFull;
 	}
-		
+
 	/**
 	 * returns the number of the category level, which should be exported first at the category path
 	 */
