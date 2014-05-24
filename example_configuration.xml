@@ -33,6 +33,8 @@
     <var name="upsell_delimiter">,</var>
     <var name="add_cross_sell">cs_skus</var>
     <var name="cross_sell_delimiter">,</var>
+    <var name="add_rp">re_skus</var>
+    <var name="related_products_delimiter">,</var>
 </action>
 
 <action type="dataflow/convert_parser_csv" method="unparse">
