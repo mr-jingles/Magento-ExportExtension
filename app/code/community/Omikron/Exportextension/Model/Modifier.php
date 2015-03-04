@@ -32,6 +32,8 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	private $_upsellDelimiter;
 	private $_crossSellFieldName;
 	private $_crossSellDelimiter;
+	private $_relatedProductsFieldName;
+	private $_relatedProductsDelimiter;
 	
 	protected function _removeHtmlTags(&$row)
 	{
@@ -211,6 +213,15 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		$row[$this->_crossSellFieldName] = implode($this->_crossSellDelimiter,$crossSellProductSkuArray);
 	}
 
+	protected function _addRelatedProductsSkus(&$row, &$product) {
+		$relatedProductskuArray = array();
+		$relatedProducts = Mage::getModel('catalog/product')->load($product->getId())->getRelatedProducts();
+		foreach ($relatedProducts as $relatedProduct) {
+			$relatedProductskuArray[] = $relatedProduct->getSku();
+		}
+		$row[$this->_relatedProductsFieldName] = implode($this->_crossSellDelimiter,$relatedProductskuArray);
+	}
+
 	/**
 	 * modifies each data
 	 */
@@ -278,7 +289,17 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$addCrossSell = true;
 		}
 
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes && !$addProductImageURL && !$addUpsell && !$addCrossSell) {
+		$addRelatedProducts = $this->getVar('add_rp', false);
+		if (empty($addRelatedProducts) || $addRelatedProducts == 'false') {
+			$addRelatedProducts = false;
+		} else {
+			$this->_relatedProductsFieldName = $addRelatedProducts;
+			$this->_relatedProductsDelimiter = $this->getVar('related_products_delimiter', ',');
+			$addRelatedProducts = true;
+		}
+
+
+		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes && !$addProductImageURL && !$addUpsell && !$addCrossSell && !$addRelatedProducts) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -344,6 +365,10 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 
 			if ($addCrossSell !== false) {
 				$this->_addCrossSellSkus($row,$product);
+			}
+
+			if ($addRelatedProducts !== false) {
+				$this->_addRelatedProductsSkus($row,$product);
 			}
 
             $batchExport->setBatchData($row)

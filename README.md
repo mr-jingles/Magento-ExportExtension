@@ -10,6 +10,7 @@ It contains a parser, which can be used by an advanced profile. This &quot;parse
 * adding gallery image URLs
 * Adding full URLs to image fields for Magmi imports
 * Adding upsell and cross-sell SKU fields
+* Adding related products
 
 This module only can be used to export product data. See the Documentation for more details: 
 [English Documentation] (http://www.magentocommerce.com/boards/viewthread/60113/)
