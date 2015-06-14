@@ -2,7 +2,6 @@
 	"name" : "mr-jingles/Magento-ExportExtension",
 	"type" : "magento-module",
 	"description" : "Magento Export-Import",
-	"homepage" : "na",
 	"require" : {
 		"magento-hackathon/magento-composer-installer" : "~2.1.1"
 	}
