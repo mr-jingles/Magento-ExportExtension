@@ -61,42 +61,14 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	protected function _addGroupPrice(&$row, &$product)
 	{
 		$groupPriceFieldName = 'group_price:';
+		$group_prices = $product->getData('group_price');
 		
-		//get all possible field names for product
-		
-		$group_price = $product->getData('group_price');
-		
-		
-		if (!is_null($group_price) || is_array($group_price)) {
-			foreach ($group_price as $group) {
-				var_dump($group);
-			}
-		}
-		
-		die();
-		
-		
-		
-		
-		
-		
-		Mage::getModel('customer/group')->getCollection();
-		
-		
-		$categoryDelimiter = $this->_getCategoryDelimiter();
-	
-		$row[$groupPriceFieldName] = '';
-		
-		$tempCatPath = '';
-		
-		foreach($product->getCategoryIds() as $categoryId){
-			$tempCatPath = $this->_getCategoryPath($categoryId);
-			if ($tempCatPath != '') {
-				//dont add delimiter if previous category path was empty or no category was added yet
-				if( $tempCatPath != '' && $row[$categoryFieldName] != '') {
-					$row[$categoryFieldName] .= $categoryDelimiter;
-				}
-				$row[$categoryFieldName] .= $tempCatPath;
+			if (!is_null($group_prices) || is_array($group_prices)) {
+			foreach ($group_prices as $group) {
+				$group_id = $group['cust_group'];
+				$group_price = $group['price'];
+				$group = Mage::getSingleton('customer/group')->load($group_id);				
+				$row[$groupPriceFieldName.trim($group->getCode())] = $group_price;				
 			}
 		}
 	}
@@ -277,6 +249,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	 */
 	public function unparse()
 	{
+		$addGroupPrice		   = $this->getVar('add_groupprice', '') == 'true' ? true : false;
 		$addCategories         = $this->getVar('add_categories', '') == 'true' ? true : false;
 		$removeLineBreaks      = $this->getVar('remove_line_breaks', '') == 'true' ? true : false;
 		$removeHtmlTags        = $this->getVar('remove_html_tags', '') == 'true' ? true : false;
@@ -349,7 +322,7 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 		}
 
 
-		if (!$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes && !$addProductImageURL && !$addUpsell && !$addCrossSell && !$addRelatedProducts) {
+		if (!$addGroupPrice && !$addCategories && !$removeLineBreaks && !$removeHtmlTags && !$addParentSku && !$addChildSku && !$addGalleryImageURLs && !$addConfigurableAttributes && !$addProductImageURL && !$addUpsell && !$addCrossSell && !$addRelatedProducts) {
 			$this->addException("no modifier activated!", Varien_Convert_Exception::NOTICE);
 			return $this;
 		}
@@ -372,8 +345,9 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$product->reset();
 			$product->load($productIds[$productCounter]);
 			
-			
-			$this->_addGroupPrice($row, $product);
+			if ($addGroupPrice){
+				$this->_addGroupPrice($row, $product);
+			}
 			
 			if ($addCategories) {
 				$this->_addCategories($row, $product);

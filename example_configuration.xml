@@ -10,9 +10,10 @@
 <action type="dataflow/convert_mapper_column" method="map">
 </action>
 
-<action method="unparse" type="exportextension/modifier">
+<action type="exportextension/modifier" method="unparse">
     <var name="remove_line_breaks">false</var>
     <var name="remove_html_tags">false</var>
+    <var name="add_groupprice">true</var>
     <var name="add_categories">true</var>
     <var name="category_field_name">categories</var>
     <var name="category_delimiter">;;</var>
