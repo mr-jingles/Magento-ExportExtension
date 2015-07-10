@@ -53,6 +53,56 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 	}
 	
 	/**
+	 * adds group_price to the row
+	 * format: 
+	 * table_name: group_price:groupName
+	 * field: 15.00
+	 */
+	protected function _addGroupPrice(&$row, &$product)
+	{
+		$groupPriceFieldName = 'group_price:';
+		
+		//get all possible field names for product
+		
+		$group_price = $product->getData('group_price');
+		
+		
+		if (!is_null($group_price) || is_array($group_price)) {
+			foreach ($group_price as $group) {
+				var_dump($group);
+			}
+		}
+		
+		die();
+		
+		
+		
+		
+		
+		
+		Mage::getModel('customer/group')->getCollection();
+		
+		
+		$categoryDelimiter = $this->_getCategoryDelimiter();
+	
+		$row[$groupPriceFieldName] = '';
+		
+		$tempCatPath = '';
+		
+		foreach($product->getCategoryIds() as $categoryId){
+			$tempCatPath = $this->_getCategoryPath($categoryId);
+			if ($tempCatPath != '') {
+				//dont add delimiter if previous category path was empty or no category was added yet
+				if( $tempCatPath != '' && $row[$categoryFieldName] != '') {
+					$row[$categoryFieldName] .= $categoryDelimiter;
+				}
+				$row[$categoryFieldName] .= $tempCatPath;
+			}
+		}
+	}
+	
+	
+	/**
 	 * adds categories to the row
 	 */
 	protected function _addCategories(&$row, &$product)
@@ -322,9 +372,13 @@ class Omikron_Exportextension_Model_Modifier extends Mage_Dataflow_Model_Convert
 			$product->reset();
 			$product->load($productIds[$productCounter]);
 			
+			
+			$this->_addGroupPrice($row, $product);
+			
 			if ($addCategories) {
 				$this->_addCategories($row, $product);
 			}
+			
 			if ($removeLineBreaks) {
 				$this->_removeLineBreaks($row);
 			}
